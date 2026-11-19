@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DualSense Tool — WebHID Touchpad + Triggers</title>
+  <title>DualSense Tool</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -25,11 +25,30 @@
       max-width: 100%;
       box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
     }
+    
+    /* NEW: Header layout for language toggle */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.45rem;
+    }
     h1 {
       font-size: 1.15rem;
-      margin: 0 0 0.45rem;
-      text-align: center;
+      margin: 0;
+      text-align: left;
     }
+    .lang-btn {
+      width: auto;
+      padding: 0.25rem 0.5rem;
+      margin: 0;
+      font-size: 0.75rem;
+      background: #2b2b36;
+      border-radius: 5px;
+      border: 1px solid #3b3b4a;
+    }
+    .lang-btn:hover { background: #3b3b4a; }
+
     .battery-pill {
       display: flex;
       align-items: center;
@@ -240,7 +259,11 @@
 </head>
 <body>
   <div class="card">
-    <h1>DualSense Touchpad + Click + Battery + Triggers</h1>
+    
+    <div class="header-row">
+      <h1 id="mainTitle">DualSense Touchpad + Click + Battery + Triggers</h1>
+      <button id="langToggle" class="lang-btn">RU</button>
+    </div>
 
     <div class="battery-pill">
       <div class="bat-bar"><div id="batFill" class="bat-fill"></div></div>
@@ -264,29 +287,29 @@
 
     <div class="triggers-panel">
       <div class="triggers-header">
-        <strong>Adaptive Triggers (L2 / R2)</strong>
+        <strong id="trigTitle">Adaptive Triggers (L2 / R2)</strong>
         <button id="resetTriggersBtn" class="mini-btn" disabled>Reset to Free Travel</button>
       </div>
       <div class="triggers-grid">
         <div class="trigger-col">
-          <h3><span>Left Trigger (L2)</span><span id="l2Summary">OFF</span></h3>
+          <h3><span id="l2Title">Left Trigger (L2)</span><span id="l2Summary">OFF</span></h3>
           <div class="slider-row">
-            <label for="l2Force"><span>Force</span><span id="l2ForceVal">0</span></label>
+            <label for="l2Force"><span id="forceLabel1">Force</span><span id="l2ForceVal">0</span></label>
             <input type="range" id="l2Force" min="0" max="255" value="0" disabled />
           </div>
           <div class="slider-row">
-            <label for="l2Start"><span>Start Position</span><span id="l2StartVal">0</span></label>
+            <label for="l2Start"><span id="startLabel1">Start Position</span><span id="l2StartVal">0</span></label>
             <input type="range" id="l2Start" min="0" max="230" value="0" disabled />
           </div>
         </div>
         <div class="trigger-col">
-          <h3><span>Right Trigger (R2)</span><span id="r2Summary">OFF</span></h3>
+          <h3><span id="r2Title">Right Trigger (R2)</span><span id="r2Summary">OFF</span></h3>
           <div class="slider-row">
-            <label for="r2Force"><span>Force</span><span id="r2ForceVal">0</span></label>
+            <label for="r2Force"><span id="forceLabel2">Force</span><span id="r2ForceVal">0</span></label>
             <input type="range" id="r2Force" min="0" max="255" value="0" disabled />
           </div>
           <div class="slider-row">
-            <label for="r2Start"><span>Start Position</span><span id="r2StartVal">0</span></label>
+            <label for="r2Start"><span id="startLabel2">Start Position</span><span id="r2StartVal">0</span></label>
             <input type="range" id="r2Start" min="0" max="230" value="0" disabled />
           </div>
         </div>
@@ -298,7 +321,7 @@
     <div class="verbose-header">
       <span>VERBOSE LOG <span id="hzBadge" class="live-badge">0 pkt/s</span></span>
       <div class="verbose-controls">
-        <label><input type="checkbox" id="logIdleCheck" /> Log Idle</label>
+        <label><input type="checkbox" id="logIdleCheck" /> <span id="logIdleLabel">Log Idle</span></label>
         <button id="clearLogBtn" class="mini-btn">Clear</button>
       </div>
     </div>
@@ -306,6 +329,165 @@
   </div>
 
   <script>
+    // --- TRANSLATIONS DICTIONARY ---
+    const i18n = {
+      en: {
+        title: "DualSense Touchpad + Click + Battery + Triggers",
+        batText: "Battery: —",
+        connectBtn: "Connect DualSense",
+        padLabel: "Touch or click the touchpad",
+        touchReadout: "Brightness: 0% (OFF)",
+        trigTitle: "Adaptive Triggers (L2 / R2)",
+        resetBtn: "Reset to Free Travel",
+        l2Title: "Left Trigger (L2)",
+        r2Title: "Right Trigger (R2)",
+        force: "Force",
+        start: "Start Position",
+        off: "OFF",
+        notConn: "Not connected",
+        logIdle: "Log Idle",
+        clear: "Clear",
+        // Log translations
+        logReady: "Ready. Click 'Connect DualSense'...",
+        logReqHid: "SYS Requesting HID device access...",
+        logCancelled: "SYS Device selection cancelled by user.",
+        logConnected: "SYS Connected:",
+        logMode: "Mode:",
+        logErrNoHid: "ERR Browser does not support WebHID.",
+        logErrNoHidUi: "WebHID is not supported in this browser.",
+        logErrConn: "Connection cancelled or blocked.",
+        logTrigReset: "OUT Triggers reset to free travel",
+        logBatPower: "BAT Power:",
+        logClickRed: "TOUCHPAD CLICK: RED (#FF0000)",
+        logBrightness: "Brightness:",
+        logIdleBat: "Idle: Battery",
+        logTrigBlue: "Trigger",
+        logBlue: "BLUE (#0066FF)",
+        logFingerLift: "Finger lifted",
+        logNoTouch: "no touchpad data — press the PS button",
+        logFromCenter: "from center:",
+        logClickLog: "CLICK=1 ->",
+        logRed: "RED",
+        logCharging: "Charging",
+        logFull: "Full",
+        logBat: "BAT",
+        logStatusConn: "Connected",
+        logStatusMove: "move or click the pad",
+        logErrSend: "ERR Failed to send HID report:",
+        logErrDev: "Device disconnected or write error."
+      },
+      ru: {
+        title: "DualSense Тачпад + Клик + Батарея + Курки",
+        batText: "Батарея: —",
+        connectBtn: "Подключить DualSense",
+        padLabel: "Коснитесь или нажмите сенсорную панель",
+        touchReadout: "Яркость: 0% (ВЫКЛ)",
+        trigTitle: "Адаптивные курки (L2 / R2)",
+        resetBtn: "Сбросить в 0",
+        l2Title: "Левый курок (L2)",
+        r2Title: "Правый курок (R2)",
+        force: "Сила",
+        start: "Старт хода",
+        off: "Выкл",
+        notConn: "Не подключено",
+        logIdle: "Логировать покой",
+        clear: "Очистить",
+        // Log translations
+        logReady: "Готово к работе. Нажмите «Подключить DualSense»...",
+        logReqHid: "SYS Запрос доступа к HID-устройству...",
+        logCancelled: "SYS Выбор устройства отменён пользователем.",
+        logConnected: "SYS Подключено:",
+        logMode: "Режим:",
+        logErrNoHid: "ERR Браузер не поддерживает WebHID.",
+        logErrNoHidUi: "WebHID не поддерживается в этом браузере.",
+        logErrConn: "Подключение отменено или заблокировано.",
+        logTrigReset: "OUT Курки сброшены в свободный ход",
+        logBatPower: "BAT Питание:",
+        logClickRed: "КЛИК ПО ТАЧПАДУ: КРАСНЫЙ (#FF0000)",
+        logBrightness: "Яркость:",
+        logIdleBat: "Покой: батарея",
+        logTrigBlue: "Курок",
+        logBlue: "СИНИЙ (#0066FF)",
+        logFingerLift: "Палец убран",
+        logNoTouch: "нет данных тачпада — нажмите кнопку PS",
+        logFromCenter: "от центра:",
+        logClickLog: "CLICK=1 ->",
+        logRed: "КРАСНЫЙ",
+        logCharging: "Зарядка",
+        logFull: "Заряжен",
+        logBat: "АКБ",
+        logStatusConn: "Подключено",
+        logStatusMove: "водите или нажимайте панель",
+        logErrSend: "ERR Ошибка отправки HID-отчёта:",
+        logErrDev: "Устройство отключено или ошибка записи."
+      }
+    };
+
+    let currentLang = 'en';
+    let t = i18n[currentLang];
+
+    // DOM Elements for translation
+    const uiEls = {
+      title: document.getElementById("mainTitle"),
+      langToggle: document.getElementById("langToggle"),
+      batText: document.getElementById("batText"),
+      connectBtn: document.getElementById("connectBtn"),
+      padLabel: document.getElementById("padLabel"),
+      touchReadout: document.getElementById("touchReadout"),
+      trigTitle: document.getElementById("trigTitle"),
+      resetBtn: document.getElementById("resetTriggersBtn"),
+      l2Title: document.getElementById("l2Title"),
+      r2Title: document.getElementById("r2Title"),
+      force1: document.getElementById("forceLabel1"),
+      force2: document.getElementById("forceLabel2"),
+      start1: document.getElementById("startLabel1"),
+      start2: document.getElementById("startLabel2"),
+      l2Summary: document.getElementById("l2Summary"),
+      r2Summary: document.getElementById("r2Summary"),
+      status: document.getElementById("status"),
+      logIdle: document.getElementById("logIdleLabel"),
+      clear: document.getElementById("clearLogBtn")
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      t = i18n[lang];
+      
+      uiEls.langToggle.textContent = lang === 'en' ? 'RU' : 'EN';
+      document.documentElement.lang = lang;
+      
+      uiEls.title.textContent = t.title;
+      uiEls.batText.textContent = t.batText;
+      uiEls.connectBtn.textContent = t.connectBtn;
+      uiEls.trigTitle.textContent = t.trigTitle;
+      uiEls.resetBtn.textContent = t.resetBtn;
+      uiEls.l2Title.textContent = t.l2Title;
+      uiEls.r2Title.textContent = t.r2Title;
+      uiEls.force1.textContent = t.force;
+      uiEls.force2.textContent = t.force;
+      uiEls.start1.textContent = t.start;
+      uiEls.start2.textContent = t.start;
+      uiEls.logIdle.textContent = t.logIdle;
+      uiEls.clear.textContent = t.clear;
+
+      // Update dynamic text if not currently connected
+      if (uiEls.status.textContent.includes("Not connected") || uiEls.status.textContent.includes("Не подключено")) {
+        uiEls.status.textContent = t.notConn;
+      }
+      if (!padLabel.textContent) { // Only update if touchpad isn't actively being touched
+        padLabel.textContent = t.padLabel;
+      }
+      
+      // Update trigger summaries
+      syncTriggerUI();
+    }
+
+    uiEls.langToggle.addEventListener("click", () => {
+      setLanguage(currentLang === 'en' ? 'ru' : 'en');
+    });
+
+    // --- END TRANSLATIONS ---
+
     const VENDOR_ID_SONY = 0x054c;
     const PRODUCT_ID_DUALSENSE = 0x0ce6;
     const PRODUCT_ID_DUALSENSE_EDGE = 0x0df2;
@@ -328,28 +510,21 @@
     let lastBatteryKey = "";
     const triggerState = { l2Force: 0, l2Start: 0, r2Force: 0, r2Start: 0 };
 
-    // --- battery + trigger-hold state for idle gradient ---
     let batteryPercent = 0;
     let batteryKnown = false;
     let l2Held = false;
     let r2Held = false;
     let lastTriggersHeld = false;
 
-    const connectBtn = document.getElementById("connectBtn");
     const touchpadEl = document.getElementById("touchpad");
-    const padLabel = document.getElementById("padLabel");
     const finger1El = document.getElementById("finger1");
     const finger2El = document.getElementById("finger2");
     const meterFill = document.getElementById("meterFill");
-    const touchReadout = document.getElementById("touchReadout");
-    const statusEl = document.getElementById("status");
     const verboseBox = document.getElementById("verboseBox");
     const hzBadge = document.getElementById("hzBadge");
     const logIdleCheck = document.getElementById("logIdleCheck");
-    const clearLogBtn = document.getElementById("clearLogBtn");
 
     const batFill = document.getElementById("batFill");
-    const batText = document.getElementById("batText");
     const l2ForceEl = document.getElementById("l2Force");
     const l2StartEl = document.getElementById("l2Start");
     const r2ForceEl = document.getElementById("r2Force");
@@ -358,8 +533,6 @@
     const l2StartVal = document.getElementById("l2StartVal");
     const r2ForceVal = document.getElementById("r2ForceVal");
     const r2StartVal = document.getElementById("r2StartVal");
-    const l2Summary = document.getElementById("l2Summary");
-    const r2Summary = document.getElementById("r2Summary");
     const resetTriggersBtn = document.getElementById("resetTriggersBtn");
 
     function addLog(text, type = "log-in") {
@@ -375,7 +548,7 @@
       verboseBox.scrollTop = verboseBox.scrollHeight;
     }
 
-    clearLogBtn.addEventListener("click", () => {
+    document.getElementById("clearLogBtn").addEventListener("click", () => {
       verboseBox.innerHTML = "";
     });
 
@@ -421,14 +594,12 @@
       return "usb";
     }
 
-    // --- battery gradient helpers ---
     function batteryColorForPercent(percent) {
-      // 100% -> green (52,211,153), 50% -> yellow (250,204,21), 0% -> red (248,113,113)
       const p = Math.max(0, Math.min(100, percent)) / 100;
       const stops = [
-        { t: 0.0, c: [248, 113, 113] }, // red
-        { t: 0.5, c: [250, 204, 21] },  // yellow
-        { t: 1.0, c: [52, 211, 153] }   // green
+        { t: 0.0, c: [248, 113, 113] },
+        { t: 0.5, c: [250, 204, 21] },
+        { t: 1.0, c: [52, 211, 153] }
       ];
       let a = stops[0], b = stops[stops.length - 1];
       for (let i = 0; i < stops.length - 1; i++) {
@@ -443,7 +614,6 @@
       return [0, 1, 2].map(i => Math.round(a.c[i] + (b.c[i] - a.c[i]) * k));
     }
 
-    // Idle color: blue while L2/R2 held, otherwise battery gradient
     function idleColor() {
       if (l2Held || r2Held) return [0, 102, 255];
       if (!batteryKnown) return [255, 255, 255];
@@ -456,9 +626,9 @@
       const levelNibble = raw & 0x0f;
       const statusNibble = (raw >> 4) & 0x0f;
       const percent = Math.min(100, levelNibble * 10);
-      let statusLabel = "BAT";
-      if (statusNibble === 0x01) statusLabel = "Charging";
-      else if (statusNibble === 0x02) statusLabel = "Full";
+      let statusLabel = t.logBat;
+      if (statusNibble === 0x01) statusLabel = t.logCharging;
+      else if (statusNibble === 0x02) statusLabel = t.logFull;
       batteryPercent = percent;
       batteryKnown = true;
       const key = `${percent}-${statusNibble}`;
@@ -467,7 +637,7 @@
         batFill.style.width = `${percent}%`;
         batFill.style.background = statusNibble === 0x01 ? "#38bdf8" : (percent <= 20 ? "#f87171" : "#34d399");
         batText.textContent = `${percent}% (${statusLabel})`;
-        addLog(`BAT Power: ${percent}% | ${statusLabel}`, "log-sys");
+        addLog(`${t.logBatPower} ${percent}% | ${statusLabel}`, "log-sys");
       }
     }
 
@@ -480,8 +650,8 @@
       l2StartVal.textContent = triggerState.l2Start;
       r2ForceVal.textContent = triggerState.r2Force;
       r2StartVal.textContent = triggerState.r2Start;
-      l2Summary.textContent = triggerState.l2Force > 0 ? `${Math.round((triggerState.l2Force / 255) * 100)}%` : "OFF";
-      r2Summary.textContent = triggerState.r2Force > 0 ? `${Math.round((triggerState.r2Force / 255) * 100)}%` : "OFF";
+      l2Summary.textContent = triggerState.l2Force > 0 ? `${Math.round((triggerState.l2Force / 255) * 100)}%` : t.off;
+      r2Summary.textContent = triggerState.r2Force > 0 ? `${Math.round((triggerState.r2Force / 255) * 100)}%` : t.off;
     }
 
     [l2ForceEl, l2StartEl, r2ForceEl, r2StartEl].forEach(slider => {
@@ -498,10 +668,9 @@
       r2StartEl.value = 0;
       syncTriggerUI();
       setLightbarBrightness(null, lastSentClick);
-      addLog("OUT Triggers reset to free travel", "log-out");
+      addLog(t.logTrigReset, "log-out");
     });
 
-    // setLightbarBrightness: rgb tuple or null (idle -> battery/blue)
     async function setLightbarBrightness(rgb, isClicked = false) {
       if (!device || !device.opened) return;
       if (isSending) {
@@ -532,7 +701,6 @@
       common.setUint8(22, triggerState.l2Start);
       common.setUint8(23, triggerState.l2Force);
 
-      // Resolve color: click -> red, explicit rgb -> use, null -> idle (battery/blue)
       let color;
       if (isClicked) {
         color = [255, 0, 0];
@@ -558,9 +726,9 @@
         const hexColor = [r, g, b].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
         addLog(`OUT [0x${reportId.toString(16).padStart(2, "0")}] -> LED #${hexColor}${isClicked ? " (CLICK!)" : ""} | L2(${triggerState.l2Force}) R2(${triggerState.r2Force})`, "log-out");
       } catch (err) {
-        addLog(`ERR Failed to send HID report: ${err.message}`, "log-err");
+        addLog(`${t.logErrSend} ${err.message}`, "log-err");
         statusEl.style.color = "#f87171";
-        statusEl.textContent = "Device disconnected or write error.";
+        statusEl.textContent = t.logErrDev;
       } finally {
         isSending = false;
         if (pendingBrightness !== null && (pendingBrightness.rgb !== rgb || pendingBrightness.isClicked !== isClicked)) {
@@ -579,7 +747,7 @@
       } else if (anyTouch) {
         setLightbarBrightness([brightness, brightness, brightness], false);
       } else {
-        setLightbarBrightness(null, false); // idle gradient / blue on trigger hold
+        setLightbarBrightness(null, false); 
       }
     }
 
@@ -633,21 +801,17 @@
         const now = performance.now();
         if (now - lastLogTime > 500) {
           lastLogTime = now;
-          addLog(`IN  [0x${reportId.toString(16).padStart(2, "0")}] len=${data.byteLength}B (no touchpad data — press the PS button)`, "log-sys");
+          addLog(`IN  [0x${reportId.toString(16).padStart(2, "0")}] len=${data.byteLength}B (${t.logNoTouch})`, "log-sys");
         }
         return;
       }
       parseBattery(data, reportId === 0x01 ? 52 : 53);
 
-      // --- FIXED: analog L2/R2 (report ID already stripped from `data`) ---
-      // USB 0x01: L2 = data[4], R2 = data[5], buttons = data[9]
-      // BT  0x31: L2 = data[5], R2 = data[6], buttons = data[10]
       const l2Val = data.getUint8(reportId === 0x01 ? 4 : 5);
       const r2Val = data.getUint8(reportId === 0x01 ? 5 : 6);
       const buttonsByte = data.getUint8(reportId === 0x01 ? 9 : 10);
       const L2_THRESHOLD = 20;
       const R2_THRESHOLD = 20;
-      // digital fallback bits in buttons byte: L2=0x40, R2=0x80 (OR'd with analog)
       l2Held = l2Val > L2_THRESHOLD || (buttonsByte & 0x40) !== 0;
       r2Held = r2Val > R2_THRESHOLD || (buttonsByte & 0x80) !== 0;
 
@@ -681,26 +845,27 @@
       const percent = isPadClicked ? 100 : Math.round((brightness / 255) * 100);
       meterFill.style.width = `${percent}%`;
       meterFill.style.background = isPadClicked ? "#ef4444" : "#ffffff";
+      
       if (isPadClicked) {
         padLabel.textContent = "";
         touchpadEl.style.borderColor = "#ef4444";
-        touchReadout.textContent = "TOUCHPAD CLICK: RED (#FF0000)";
+        touchReadout.textContent = t.logClickRed;
       } else if (anyTouch) {
         padLabel.textContent = "";
         touchpadEl.style.borderColor = `rgb(${brightness}, ${brightness}, ${brightness})`;
-        touchReadout.textContent = `Brightness: ${percent}% (RGB: ${brightness})`;
+        touchReadout.textContent = `${t.logBrightness} ${percent}% (RGB: ${brightness})`;
       } else {
-        padLabel.textContent = "Touch or click the touchpad";
+        padLabel.textContent = t.padLabel;
         touchpadEl.style.borderColor = "#2f2f3d";
         const trig = l2Held || r2Held ? (l2Held && r2Held ? "L2+R2" : (l2Held ? "L2" : "R2")) : null;
         if (trig) {
-          touchReadout.textContent = `Trigger ${trig} — BLUE (#0066FF)`;
+          touchReadout.textContent = `${t.logTrigBlue} ${trig} — ${t.logBlue}`;
         } else if (batteryKnown) {
           const [br, bg, bb] = batteryColorForPercent(batteryPercent);
           const hex = [br, bg, bb].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
-          touchReadout.textContent = `Idle: Battery ${batteryPercent}% (#${hex})`;
+          touchReadout.textContent = `${t.logIdleBat} ${batteryPercent}% (#${hex})`;
         } else {
-          touchReadout.textContent = "Brightness: 0% (OFF)";
+          touchReadout.textContent = t.touchReadout;
         }
       }
       const now = performance.now();
@@ -712,11 +877,11 @@
           const p1Str = p1.isTouching ? `P1(id:${p1.touchId} X:${p1.x} Y:${p1.y})` : "P1(off)";
           const p2Str = p2.isTouching ? `P2(id:${p2.touchId} X:${p2.x} Y:${p2.y})` : "P2(off)";
           if (isPadClicked) {
-            addLog(`IN  [${rIdHex}] CLICK=1 -> ${p1Str} ${p2Str} | RED`, "log-err");
+            addLog(`IN  [${rIdHex}] ${t.logClickLog} ${p1Str} ${p2Str} | ${t.logRed}`, "log-err");
           } else if (anyTouch) {
-            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> ${p1Str} ${p2Str} | from center: ${distPct}%`, "log-touch");
+            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> ${p1Str} ${p2Str} | ${t.logFromCenter} ${distPct}%`, "log-touch");
           } else {
-            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> Finger lifted`, "log-in");
+            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> ${t.logFingerLift}`, "log-in");
           }
         }
       }
@@ -736,17 +901,19 @@
       }
     }
 
-    addLog("Ready. Click 'Connect DualSense'...", "log-sys");
+    // Initialize language
+    setLanguage('en');
+    addLog(t.logReady, "log-sys");
 
     connectBtn.addEventListener("click", async () => {
       if (!("hid" in navigator)) {
-        addLog("ERR Browser does not support WebHID.", "log-err");
+        addLog(t.logErrNoHid, "log-err");
         statusEl.style.color = "#f87171";
-        statusEl.textContent = "WebHID is not supported in this browser.";
+        statusEl.textContent = t.logErrNoHidUi;
         return;
       }
       try {
-        addLog("SYS Requesting HID device access...", "log-sys");
+        addLog(t.logReqHid, "log-sys");
         const devices = await navigator.hid.requestDevice({
           filters: [
             { vendorId: VENDOR_ID_SONY, productId: PRODUCT_ID_DUALSENSE, usagePage: 0x0001, usage: 0x0005 },
@@ -754,25 +921,25 @@
           ]
         });
         if (!devices.length) {
-          addLog("SYS Device selection cancelled by user.", "log-sys");
+          addLog(t.logCancelled, "log-sys");
           return;
         }
         device = devices.at(0);
         if (!device.opened) await device.open();
         connectionType = detectConnectionType(device);
         [l2ForceEl, l2StartEl, r2ForceEl, r2StartEl, resetTriggersBtn].forEach(el => (el.disabled = false));
-        addLog(`SYS Connected: ${device.productName} | Mode: ${connectionType.toUpperCase()}`, "log-sys");
+        addLog(`${t.logConnected} ${device.productName} | ${t.logMode} ${connectionType.toUpperCase()}`, "log-sys");
         lastSentBrightness = -1;
         lastSentClick = false;
         lastTriggersHeld = false;
-        await setLightbarBrightness(null, false); // start in idle battery gradient
+        await setLightbarBrightness(null, false);
         device.addEventListener("inputreport", handleInputReport);
         statusEl.style.color = "#34d399";
-        statusEl.textContent = `Connected (${connectionType.toUpperCase()}) — move or click the pad`;
+        statusEl.textContent = `${t.logStatusConn} (${connectionType.toUpperCase()}) — ${t.logStatusMove}`;
       } catch (err) {
         addLog(`ERR ${err.message}`, "log-err");
         statusEl.style.color = "#f87171";
-        statusEl.textContent = "Connection cancelled or blocked.";
+        statusEl.textContent = t.logErrConn;
       }
     });
   </script>
