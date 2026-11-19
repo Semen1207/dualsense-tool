@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DualSense Touchpad + Click + Battery + Triggers</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f13;
+      color: #f4f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #1a1a22;
+      padding: 1.5rem;
+      border-radius: 16px;
+      width: 540px;
+      max-width: 100%;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+    }
+    h1 {
+      font-size: 1.15rem;
+      margin: 0 0 0.45rem;
+      text-align: center;
+    }
+    .battery-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      background: #252530;
+      border: 1px solid #343442;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin: 0 auto 0.9rem;
+      width: fit-content;
+    }
+    .bat-bar {
+      width: 26px;
+      height: 12px;
+      border: 1.5px solid #a1a1aa;
+      border-radius: 3px;
+      padding: 1px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+    }
+    .bat-fill {
+      height: 100%;
+      width: 0%;
+      background: #34d399;
+      border-radius: 1px;
+      transition: width 0.25s, background-color 0.25s;
+    }
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #0070d1;
+      color: white;
+      margin-bottom: 1rem;
+    }
+    button:hover { background: #005bb5; }
+    button:disabled { background: #343440; color: #71717a; cursor: not-allowed; }
+    .touchpad {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      background: linear-gradient(90deg, #14141a 0%, #2d2d3a 50%, #14141a 100%);
+      border-radius: 14px 14px 26px 26px;
+      border: 2px solid #2f2f3d;
+      box-sizing: border-box;
+      overflow: hidden;
+      transition: border-color 0.08s;
+      margin-bottom: 0.75rem;
+    }
+    .center-guide {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.16);
+      pointer-events: none;
+    }
+    .finger-dot {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 16px #ffffff;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: none;
+    }
+    .pad-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #8e8e9e;
+      pointer-events: none;
+    }
+    .meter-bar {
+      width: 100%;
+      height: 7px;
+      background: #262630;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      transition: width 0.04s linear;
+    }
+    .readout {
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 0.85rem;
+    }
+    .triggers-panel {
+      background: #22222c;
+      border: 1px solid #30303e;
+      border-radius: 12px;
+      padding: 0.85rem;
+      margin-bottom: 0.85rem;
+    }
+    .triggers-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.65rem;
+      font-size: 0.86rem;
+    }
+    .triggers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+    .trigger-col {
+      background: #191921;
+      padding: 0.65rem;
+      border-radius: 8px;
+      border: 1px solid #2c2c38;
+    }
+    .trigger-col h3 {
+      font-size: 0.8rem;
+      margin: 0 0 0.5rem;
+      color: #60a5fa;
+      display: flex;
+      justify-content: space-between;
+    }
+    .slider-row { margin-bottom: 0.45rem; }
+    .slider-row label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #a1a1aa;
+      margin-bottom: 0.2rem;
+    }
+    .slider-row input[type="range"] { width: 100%; cursor: pointer; }
+    #status {
+      font-size: 0.8rem;
+      color: #34d399;
+      text-align: center;
+      margin-bottom: 0.85rem;
+    }
+    .verbose-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: #a1a1aa;
+      margin-bottom: 0.4rem;
+    }
+    .verbose-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .mini-btn {
+      width: auto;
+      padding: 0.25rem 0.55rem;
+      margin: 0;
+      font-size: 0.75rem;
+      background: #2b2b36;
+      border-radius: 5px;
+    }
+    .mini-btn:hover { background: #3b3b4a; }
+    .live-badge {
+      background: #14532d;
+      color: #4ade80;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+    }
+    .verbose-box {
+      background: #0a0a0d;
+      border: 1px solid #2a2a35;
+      border-radius: 8px;
+      padding: 0.6rem;
+      height: 160px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: #d4d4d8;
+    }
+    .log-line {
+      white-space: pre;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 1px 0;
+    }
+    .log-in { color: #38bdf8; }
+    .log-touch { color: #4ade80; }
+    .log-out { color: #fbbf24; }
+    .log-sys { color: #c084fc; }
+    .log-err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>DualSense Touchpad + Click + Battery + Triggers</h1>
+
+    <div class="battery-pill">
+      <div class="bat-bar"><div id="batFill" class="bat-fill"></div></div>
+      <span id="batText">Батарея: —</span>
+    </div>
+
+    <button id="connectBtn">Подключить DualSense</button>
+
+    <div id="touchpad" class="touchpad">
+      <div class="center-guide"></div>
+      <div class="pad-label" id="padLabel">Коснитесь или нажмите сенсорную панель</div>
+      <div id="finger1" class="finger-dot"></div>
+      <div id="finger2" class="finger-dot"></div>
+    </div>
+
+    <div class="meter-bar">
+      <div id="meterFill" class="meter-fill"></div>
+    </div>
+
+    <div class="readout" id="touchReadout">Яркость: 0% (ВЫКЛ)</div>
+
+    <div class="triggers-panel">
+      <div class="triggers-header">
+        <strong>Адаптивные курки (L2 / R2)</strong>
+        <button id="resetTriggersBtn" class="mini-btn" disabled>Сбросить в 0</button>
+      </div>
+      <div class="triggers-grid">
+        <div class="trigger-col">
+          <h3><span>Левый курок (L2)</span><span id="l2Summary">Выкл</span></h3>
+          <div class="slider-row">
+            <label for="l2Force"><span>Сила</span><span id="l2ForceVal">0</span></label>
+            <input type="range" id="l2Force" min="0" max="255" value="0" disabled />
+          </div>
+          <div class="slider-row">
+            <label for="l2Start"><span>Старт хода</span><span id="l2StartVal">0</span></label>
+            <input type="range" id="l2Start" min="0" max="230" value="0" disabled />
+          </div>
+        </div>
+        <div class="trigger-col">
+          <h3><span>Правый курок (R2)</span><span id="r2Summary">Выкл</span></h3>
+          <div class="slider-row">
+            <label for="r2Force"><span>Сила</span><span id="r2ForceVal">0</span></label>
+            <input type="range" id="r2Force" min="0" max="255" value="0" disabled />
+          </div>
+          <div class="slider-row">
+            <label for="r2Start"><span>Старт хода</span><span id="r2StartVal">0</span></label>
+            <input type="range" id="r2Start" min="0" max="230" value="0" disabled />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status">Не подключено</div>
+
+    <div class="verbose-header">
+      <span>VERBOSE LOG <span id="hzBadge" class="live-badge">0 pkt/s</span></span>
+      <div class="verbose-controls">
+        <label><input type="checkbox" id="logIdleCheck" /> Логировать покой</label>
+        <button id="clearLogBtn" class="mini-btn">Очистить</button>
+      </div>
+    </div>
+    <div id="verboseBox" class="verbose-box"></div>
+  </div>
+
+  <script>
+    const VENDOR_ID_SONY = 0x054c;
+    const PRODUCT_ID_DUALSENSE = 0x0ce6;
+    const PRODUCT_ID_DUALSENSE_EDGE = 0x0df2;
+
+    const PAD_MAX_X = 1920;
+    const PAD_MAX_Y = 1080;
+    const PAD_CENTER_X = PAD_MAX_X / 2;
+
+    let device = null;
+    let connectionType = "usb";
+    let outputSeq = 1;
+    let lastSentBrightness = -1;
+    let lastSentClick = false;
+    let isSending = false;
+    let pendingBrightness = null;
+
+    let packetCount = 0;
+    let lastLogTime = 0;
+    let wasTouchingPrev = false;
+    let lastBatteryKey = "";
+    const triggerState = { l2Force: 0, l2Start: 0, r2Force: 0, r2Start: 0 };
+
+    // --- battery + trigger-hold state for idle gradient ---
+    let batteryPercent = 0;
+    let batteryKnown = false;
+    let l2Held = false;
+    let r2Held = false;
+    let lastTriggersHeld = false;
+
+    const connectBtn = document.getElementById("connectBtn");
+    const touchpadEl = document.getElementById("touchpad");
+    const padLabel = document.getElementById("padLabel");
+    const finger1El = document.getElementById("finger1");
+    const finger2El = document.getElementById("finger2");
+    const meterFill = document.getElementById("meterFill");
+    const touchReadout = document.getElementById("touchReadout");
+    const statusEl = document.getElementById("status");
+    const verboseBox = document.getElementById("verboseBox");
+    const hzBadge = document.getElementById("hzBadge");
+    const logIdleCheck = document.getElementById("logIdleCheck");
+    const clearLogBtn = document.getElementById("clearLogBtn");
+
+    const batFill = document.getElementById("batFill");
+    const batText = document.getElementById("batText");
+    const l2ForceEl = document.getElementById("l2Force");
+    const l2StartEl = document.getElementById("l2Start");
+    const r2ForceEl = document.getElementById("r2Force");
+    const r2StartEl = document.getElementById("r2Start");
+    const l2ForceVal = document.getElementById("l2ForceVal");
+    const l2StartVal = document.getElementById("l2StartVal");
+    const r2ForceVal = document.getElementById("r2ForceVal");
+    const r2StartVal = document.getElementById("r2StartVal");
+    const l2Summary = document.getElementById("l2Summary");
+    const r2Summary = document.getElementById("r2Summary");
+    const resetTriggersBtn = document.getElementById("resetTriggersBtn");
+
+    function addLog(text, type = "log-in") {
+      const now = new Date();
+      const ts = now.toTimeString().split(" ").at(0) + "." + String(now.getMilliseconds()).padStart(3, "0");
+      const line = document.createElement("div");
+      line.className = `log-line ${type}`;
+      line.textContent = `[${ts}] ${text}`;
+      verboseBox.appendChild(line);
+      while (verboseBox.childElementCount > 120) {
+        verboseBox.removeChild(verboseBox.firstChild);
+      }
+      verboseBox.scrollTop = verboseBox.scrollHeight;
+    }
+
+    clearLogBtn.addEventListener("click", () => {
+      verboseBox.innerHTML = "";
+    });
+
+    setInterval(() => {
+      hzBadge.textContent = `${packetCount} pkt/s`;
+      packetCount = 0;
+    }, 1000);
+
+    const crcTable = (() => {
+      const table = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) {
+          c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        table[n] = c >>> 0;
+      }
+      return table;
+    })();
+
+    function computeCrc32(prefixBytes, dataView) {
+      let crc = 0xffffffff;
+      for (const byte of prefixBytes) {
+        crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 0xff];
+      }
+      for (let i = 0; i < dataView.byteLength; i++) {
+        crc = (crc >>> 8) ^ crcTable[(crc ^ dataView.getUint8(i)) & 0xff];
+      }
+      return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    function detectConnectionType(hidDevice) {
+      for (const c of hidDevice.collections) {
+        if (c.usagePage === 0x0001 && c.usage === 0x0005) {
+          const maxInputBits = c.inputReports.reduce((max, report) => {
+            const bits = report.items.reduce((sum, item) => sum + item.reportSize * item.reportCount, 0);
+            return Math.max(max, bits);
+          }, 0);
+          if (maxInputBits === 504) return "usb";
+          if (maxInputBits === 616) return "bluetooth";
+        }
+      }
+      return "usb";
+    }
+
+    // --- battery gradient helpers ---
+    function batteryColorForPercent(percent) {
+      // 100% -> green (52,211,153), 50% -> yellow (250,204,21), 0% -> red (248,113,113)
+      const p = Math.max(0, Math.min(100, percent)) / 100;
+      const stops = [
+        { t: 0.0, c: [248, 113, 113] }, // red
+        { t: 0.5, c: [250, 204, 21] },  // yellow
+        { t: 1.0, c: [52, 211, 153] }   // green
+      ];
+      let a = stops[0], b = stops[stops.length - 1];
+      for (let i = 0; i < stops.length - 1; i++) {
+        if (p >= stops[i].t && p <= stops[i + 1].t) {
+          a = stops[i];
+          b = stops[i + 1];
+          break;
+        }
+      }
+      const span = b.t - a.t || 1;
+      const k = (p - a.t) / span;
+      return [0, 1, 2].map(i => Math.round(a.c[i] + (b.c[i] - a.c[i]) * k));
+    }
+
+    // Idle color: blue while L2/R2 held, otherwise battery gradient
+    function idleColor() {
+      if (l2Held || r2Held) return [0, 102, 255];
+      if (!batteryKnown) return [255, 255, 255];
+      return batteryColorForPercent(batteryPercent);
+    }
+
+    function parseBattery(data, offset) {
+      if (data.byteLength <= offset) return;
+      const raw = data.getUint8(offset);
+      const levelNibble = raw & 0x0f;
+      const statusNibble = (raw >> 4) & 0x0f;
+      const percent = Math.min(100, levelNibble * 10);
+      let statusLabel = "АКБ";
+      if (statusNibble === 0x01) statusLabel = "Зарядка";
+      else if (statusNibble === 0x02) statusLabel = "Заряжен";
+      batteryPercent = percent;
+      batteryKnown = true;
+      const key = `${percent}-${statusNibble}`;
+      if (key !== lastBatteryKey) {
+        lastBatteryKey = key;
+        batFill.style.width = `${percent}%`;
+        batFill.style.background = statusNibble === 0x01 ? "#38bdf8" : (percent <= 20 ? "#f87171" : "#34d399");
+        batText.textContent = `${percent}% (${statusLabel})`;
+        addLog(`BAT Питание: ${percent}% | ${statusLabel}`, "log-sys");
+      }
+    }
+
+    function syncTriggerUI() {
+      triggerState.l2Force = Number(l2ForceEl.value);
+      triggerState.l2Start = Number(l2StartEl.value);
+      triggerState.r2Force = Number(r2ForceEl.value);
+      triggerState.r2Start = Number(r2StartEl.value);
+      l2ForceVal.textContent = triggerState.l2Force;
+      l2StartVal.textContent = triggerState.l2Start;
+      r2ForceVal.textContent = triggerState.r2Force;
+      r2StartVal.textContent = triggerState.r2Start;
+      l2Summary.textContent = triggerState.l2Force > 0 ? `${Math.round((triggerState.l2Force / 255) * 100)}%` : "Выкл";
+      r2Summary.textContent = triggerState.r2Force > 0 ? `${Math.round((triggerState.r2Force / 255) * 100)}%` : "Выкл";
+    }
+
+    [l2ForceEl, l2StartEl, r2ForceEl, r2StartEl].forEach(slider => {
+      slider.addEventListener("input", () => {
+        syncTriggerUI();
+        setLightbarBrightness(null, lastSentClick);
+      });
+    });
+
+    resetTriggersBtn.addEventListener("click", () => {
+      l2ForceEl.value = 0;
+      l2StartEl.value = 0;
+      r2ForceEl.value = 0;
+      r2StartEl.value = 0;
+      syncTriggerUI();
+      setLightbarBrightness(null, lastSentClick);
+      addLog("OUT Курки сброшены в свободный ход", "log-out");
+    });
+
+    // setLightbarBrightness: rgb tuple or null (idle -> battery/blue)
+    async function setLightbarBrightness(rgb, isClicked = false) {
+      if (!device || !device.opened) return;
+      if (isSending) {
+        pendingBrightness = { rgb, isClicked };
+        return;
+      }
+      isSending = true;
+      let reportId;
+      let reportData;
+      let common;
+      if (connectionType === "bluetooth") {
+        reportId = 0x31;
+        reportData = new Uint8Array(77);
+        reportData.set([(outputSeq << 4), 0x10], 0);
+        outputSeq = (outputSeq + 1) & 0x0f;
+        common = new DataView(reportData.buffer, 2, 47);
+      } else {
+        reportId = 0x02;
+        reportData = new Uint8Array(47);
+        common = new DataView(reportData.buffer, 0, 47);
+      }
+      common.setUint8(0, 0x04 | 0x08);
+      common.setUint8(1, 0x04);
+      common.setUint8(10, triggerState.r2Force > 0 ? 0x01 : 0x00);
+      common.setUint8(11, triggerState.r2Start);
+      common.setUint8(12, triggerState.r2Force);
+      common.setUint8(21, triggerState.l2Force > 0 ? 0x01 : 0x00);
+      common.setUint8(22, triggerState.l2Start);
+      common.setUint8(23, triggerState.l2Force);
+
+      // Resolve color: click -> red, explicit rgb -> use, null -> idle (battery/blue)
+      let color;
+      if (isClicked) {
+        color = [255, 0, 0];
+      } else if (rgb) {
+        color = rgb;
+      } else {
+        color = idleColor();
+      }
+      const [r, g, b] = color;
+
+      common.setUint8(39, 0x02);
+      common.setUint8(41, 0x02);
+      common.setUint8(44, r);
+      common.setUint8(45, g);
+      common.setUint8(46, b);
+      if (connectionType === "bluetooth") {
+        const crc = computeCrc32([0xa2, reportId], new DataView(reportData.buffer, 0, reportData.byteLength - 4));
+        const crcView = new DataView(reportData.buffer, reportData.byteLength - 4, 4);
+        crcView.setUint32(0, crc, true);
+      }
+      try {
+        await device.sendReport(reportId, reportData);
+        const hexColor = [r, g, b].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
+        addLog(`OUT [0x${reportId.toString(16).padStart(2, "0")}] -> LED #${hexColor}${isClicked ? " (CLICK!)" : ""} | L2(${triggerState.l2Force}) R2(${triggerState.r2Force})`, "log-out");
+      } catch (err) {
+        addLog(`ERR Ошибка отправки HID-отчёта: ${err.message}`, "log-err");
+        statusEl.style.color = "#f87171";
+        statusEl.textContent = "Устройство отключено или ошибка записи.";
+      } finally {
+        isSending = false;
+        if (pendingBrightness !== null && (pendingBrightness.rgb !== rgb || pendingBrightness.isClicked !== isClicked)) {
+          const next = pendingBrightness;
+          pendingBrightness = null;
+          setLightbarBrightness(next.rgb, next.isClicked);
+        } else {
+          pendingBrightness = null;
+        }
+      }
+    }
+
+    function applyLightbarForState(anyTouch, isClicked, brightness) {
+      if (isClicked) {
+        setLightbarBrightness(null, true);
+      } else if (anyTouch) {
+        setLightbarBrightness([brightness, brightness, brightness], false);
+      } else {
+        setLightbarBrightness(null, false); // idle gradient / blue on trigger hold
+      }
+    }
+
+    function parseTouchPoint(data, offset) {
+      const rawId = data.getUint8(offset);
+      const isTouching = (rawId & 0x80) === 0;
+      const touchId = rawId & 0x7f;
+      const b1 = data.getUint8(offset + 1);
+      const b2 = data.getUint8(offset + 2);
+      const b3 = data.getUint8(offset + 3);
+      const x = ((b2 & 0x0f) << 8) | b1;
+      const y = (b3 << 4) | ((b2 & 0xf0) >> 4);
+      const rawHex = [rawId, b1, b2, b3]
+        .map(b => b.toString(16).padStart(2, "0").toUpperCase())
+        .join(" ");
+      return { isTouching, touchId, x, y, rawHex };
+    }
+
+    function getCenterProximityBrightness(x) {
+      const distFromCenter = Math.min(1, Math.abs(x - PAD_CENTER_X) / PAD_CENTER_X);
+      const linearProximity = 1 - distFromCenter;
+      const curved = Math.pow(linearProximity, 1.5);
+      return {
+        brightness: Math.round(curved * 255),
+        distPct: Math.round(distFromCenter * 100)
+      };
+    }
+
+    function updateVisualDot(el, point, brightness, isClicked) {
+      if (point.isTouching) {
+        el.style.display = "block";
+        el.style.left = `${(point.x / PAD_MAX_X) * 100}%`;
+        el.style.top = `${(point.y / PAD_MAX_Y) * 100}%`;
+        el.style.background = isClicked ? "#ef4444" : "#ffffff";
+        el.style.boxShadow = isClicked ? "0 0 18px #ef4444" : "0 0 16px #ffffff";
+        el.style.opacity = isClicked ? 1 : Math.max(0.2, brightness / 255);
+      } else {
+        el.style.display = "none";
+      }
+    }
+
+    function handleInputReport(event) {
+      const { reportId, data } = event;
+      packetCount++;
+      let touchOffset = null;
+      if (reportId === 0x01 && data.byteLength >= 40) {
+        touchOffset = 32;
+      } else if (reportId === 0x31 && data.byteLength >= 41) {
+        touchOffset = 33;
+      } else {
+        const now = performance.now();
+        if (now - lastLogTime > 500) {
+          lastLogTime = now;
+          addLog(`IN  [0x${reportId.toString(16).padStart(2, "0")}] len=${data.byteLength}B (нет данных тачпада — нажмите кнопку PS)`, "log-sys");
+        }
+        return;
+      }
+      parseBattery(data, reportId === 0x01 ? 52 : 53);
+
+      // --- FIXED: analog L2/R2 (report ID already stripped from `data`) ---
+      // USB 0x01: L2 = data[4], R2 = data[5], buttons = data[9]
+      // BT  0x31: L2 = data[5], R2 = data[6], buttons = data[10]
+      const l2Val = data.getUint8(reportId === 0x01 ? 4 : 5);
+      const r2Val = data.getUint8(reportId === 0x01 ? 5 : 6);
+      const buttonsByte = data.getUint8(reportId === 0x01 ? 9 : 10);
+      const L2_THRESHOLD = 20;
+      const R2_THRESHOLD = 20;
+      // digital fallback bits in buttons byte: L2=0x40, R2=0x80 (OR'd with analog)
+      l2Held = l2Val > L2_THRESHOLD || (buttonsByte & 0x40) !== 0;
+      r2Held = r2Val > R2_THRESHOLD || (buttonsByte & 0x80) !== 0;
+
+      const isPadClicked = (buttonsByte & 0x02) !== 0;
+      const p1 = parseTouchPoint(data, touchOffset);
+      const p2 = parseTouchPoint(data, touchOffset + 4);
+      const anyTouch = p1.isTouching || p2.isTouching;
+      let brightness = 0;
+      let distPct = 100;
+      if (p1.isTouching && p2.isTouching) {
+        const res1 = getCenterProximityBrightness(p1.x);
+        const res2 = getCenterProximityBrightness(p2.x);
+        if (res1.brightness >= res2.brightness) {
+          brightness = res1.brightness;
+          distPct = res1.distPct;
+        } else {
+          brightness = res2.brightness;
+          distPct = res2.distPct;
+        }
+      } else if (p1.isTouching) {
+        const res = getCenterProximityBrightness(p1.x);
+        brightness = res.brightness;
+        distPct = res.distPct;
+      } else if (p2.isTouching) {
+        const res = getCenterProximityBrightness(p2.x);
+        brightness = res.brightness;
+        distPct = res.distPct;
+      }
+      updateVisualDot(finger1El, p1, brightness, isPadClicked);
+      updateVisualDot(finger2El, p2, brightness, isPadClicked);
+      const percent = isPadClicked ? 100 : Math.round((brightness / 255) * 100);
+      meterFill.style.width = `${percent}%`;
+      meterFill.style.background = isPadClicked ? "#ef4444" : "#ffffff";
+      if (isPadClicked) {
+        padLabel.textContent = "";
+        touchpadEl.style.borderColor = "#ef4444";
+        touchReadout.textContent = "КЛИК ПО ТАЧПАДУ: КРАСНЫЙ (#FF0000)";
+      } else if (anyTouch) {
+        padLabel.textContent = "";
+        touchpadEl.style.borderColor = `rgb(${brightness}, ${brightness}, ${brightness})`;
+        touchReadout.textContent = `Яркость: ${percent}% (RGB: ${brightness})`;
+      } else {
+        padLabel.textContent = "Коснитесь или нажмите сенсорную панель";
+        touchpadEl.style.borderColor = "#2f2f3d";
+        const trig = l2Held || r2Held ? (l2Held && r2Held ? "L2+R2" : (l2Held ? "L2" : "R2")) : null;
+        if (trig) {
+          touchReadout.textContent = `Курок ${trig} — СИНИЙ (#0066FF)`;
+        } else if (batteryKnown) {
+          const [br, bg, bb] = batteryColorForPercent(batteryPercent);
+          const hex = [br, bg, bb].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
+          touchReadout.textContent = `Покой: батарея ${batteryPercent}% (#${hex})`;
+        } else {
+          touchReadout.textContent = "Яркость: 0% (ВЫКЛ)";
+        }
+      }
+      const now = performance.now();
+      const stateChanged = anyTouch !== wasTouchingPrev || isPadClicked !== lastSentClick;
+      if (anyTouch || isPadClicked || logIdleCheck.checked || stateChanged) {
+        if (stateChanged || now - lastLogTime >= 45) {
+          lastLogTime = now;
+          const rIdHex = "0x" + reportId.toString(16).padStart(2, "0");
+          const p1Str = p1.isTouching ? `P1(id:${p1.touchId} X:${p1.x} Y:${p1.y})` : "P1(off)";
+          const p2Str = p2.isTouching ? `P2(id:${p2.touchId} X:${p2.x} Y:${p2.y})` : "P2(off)";
+          if (isPadClicked) {
+            addLog(`IN  [${rIdHex}] CLICK=1 -> ${p1Str} ${p2Str} | КРАСНЫЙ`, "log-err");
+          } else if (anyTouch) {
+            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> ${p1Str} ${p2Str} | от центра: ${distPct}%`, "log-touch");
+          } else {
+            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> Палец убран`, "log-in");
+          }
+        }
+      }
+      wasTouchingPrev = anyTouch;
+
+      const triggersChanged = (l2Held || r2Held) !== lastTriggersHeld;
+      lastTriggersHeld = l2Held || r2Held;
+
+      const brightnessChanged =
+        brightness !== lastSentBrightness &&
+        (brightness === 0 || brightness === 255 || Math.abs(brightness - lastSentBrightness) >= 2);
+
+      if (isPadClicked !== lastSentClick || brightnessChanged || triggersChanged || (!anyTouch && !isPadClicked)) {
+        lastSentClick = isPadClicked;
+        lastSentBrightness = brightness;
+        applyLightbarForState(anyTouch, isPadClicked, brightness);
+      }
+    }
+
+    addLog("Готово к работе. Нажмите «Подключить DualSense»...", "log-sys");
+
+    connectBtn.addEventListener("click", async () => {
+      if (!("hid" in navigator)) {
+        addLog("ERR Браузер не поддерживает WebHID.", "log-err");
+        statusEl.style.color = "#f87171";
+        statusEl.textContent = "WebHID не поддерживается в этом браузере.";
+        return;
+      }
+      try {
+        addLog("SYS Запрос доступа к HID-устройству...", "log-sys");
+        const devices = await navigator.hid.requestDevice({
+          filters: [
+            { vendorId: VENDOR_ID_SONY, productId: PRODUCT_ID_DUALSENSE, usagePage: 0x0001, usage: 0x0005 },
+            { vendorId: VENDOR_ID_SONY, productId: PRODUCT_ID_DUALSENSE_EDGE, usagePage: 0x0001, usage: 0x0005 }
+          ]
+        });
+        if (!devices.length) {
+          addLog("SYS Выбор устройства отменён пользователем.", "log-sys");
+          return;
+        }
+        device = devices.at(0);
+        if (!device.opened) await device.open();
+        connectionType = detectConnectionType(device);
+        [l2ForceEl, l2StartEl, r2ForceEl, r2StartEl, resetTriggersBtn].forEach(el => (el.disabled = false));
+        addLog(`SYS Подключено: ${device.productName} | Режим: ${connectionType.toUpperCase()}`, "log-sys");
+        lastSentBrightness = -1;
+        lastSentClick = false;
+        lastTriggersHeld = false;
+        await setLightbarBrightness(null, false); // start in idle battery gradient
+        device.addEventListener("inputreport", handleInputReport);
+        statusEl.style.color = "#34d399";
+        statusEl.textContent = `Подключено (${connectionType.toUpperCase()}) — водите или нажимайте панель`;
+      } catch (err) {
+        addLog(`ERR ${err.message}`, "log-err");
+        statusEl.style.color = "#f87171";
+        statusEl.textContent = "Подключение отменено или заблокировано.";
+      }
+    });
+  </script>
+</body>
+</html>
