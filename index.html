@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DualSense Touchpad + Click + Battery + Triggers</title>
+  <title>DualSense Tool — WebHID Touchpad + Triggers</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -244,14 +244,14 @@
 
     <div class="battery-pill">
       <div class="bat-bar"><div id="batFill" class="bat-fill"></div></div>
-      <span id="batText">Батарея: —</span>
+      <span id="batText">Battery: —</span>
     </div>
 
-    <button id="connectBtn">Подключить DualSense</button>
+    <button id="connectBtn">Connect DualSense</button>
 
     <div id="touchpad" class="touchpad">
       <div class="center-guide"></div>
-      <div class="pad-label" id="padLabel">Коснитесь или нажмите сенсорную панель</div>
+      <div class="pad-label" id="padLabel">Touch or click the touchpad</div>
       <div id="finger1" class="finger-dot"></div>
       <div id="finger2" class="finger-dot"></div>
     </div>
@@ -260,46 +260,46 @@
       <div id="meterFill" class="meter-fill"></div>
     </div>
 
-    <div class="readout" id="touchReadout">Яркость: 0% (ВЫКЛ)</div>
+    <div class="readout" id="touchReadout">Brightness: 0% (OFF)</div>
 
     <div class="triggers-panel">
       <div class="triggers-header">
-        <strong>Адаптивные курки (L2 / R2)</strong>
-        <button id="resetTriggersBtn" class="mini-btn" disabled>Сбросить в 0</button>
+        <strong>Adaptive Triggers (L2 / R2)</strong>
+        <button id="resetTriggersBtn" class="mini-btn" disabled>Reset to Free Travel</button>
       </div>
       <div class="triggers-grid">
         <div class="trigger-col">
-          <h3><span>Левый курок (L2)</span><span id="l2Summary">Выкл</span></h3>
+          <h3><span>Left Trigger (L2)</span><span id="l2Summary">OFF</span></h3>
           <div class="slider-row">
-            <label for="l2Force"><span>Сила</span><span id="l2ForceVal">0</span></label>
+            <label for="l2Force"><span>Force</span><span id="l2ForceVal">0</span></label>
             <input type="range" id="l2Force" min="0" max="255" value="0" disabled />
           </div>
           <div class="slider-row">
-            <label for="l2Start"><span>Старт хода</span><span id="l2StartVal">0</span></label>
+            <label for="l2Start"><span>Start Position</span><span id="l2StartVal">0</span></label>
             <input type="range" id="l2Start" min="0" max="230" value="0" disabled />
           </div>
         </div>
         <div class="trigger-col">
-          <h3><span>Правый курок (R2)</span><span id="r2Summary">Выкл</span></h3>
+          <h3><span>Right Trigger (R2)</span><span id="r2Summary">OFF</span></h3>
           <div class="slider-row">
-            <label for="r2Force"><span>Сила</span><span id="r2ForceVal">0</span></label>
+            <label for="r2Force"><span>Force</span><span id="r2ForceVal">0</span></label>
             <input type="range" id="r2Force" min="0" max="255" value="0" disabled />
           </div>
           <div class="slider-row">
-            <label for="r2Start"><span>Старт хода</span><span id="r2StartVal">0</span></label>
+            <label for="r2Start"><span>Start Position</span><span id="r2StartVal">0</span></label>
             <input type="range" id="r2Start" min="0" max="230" value="0" disabled />
           </div>
         </div>
       </div>
     </div>
 
-    <div id="status">Не подключено</div>
+    <div id="status">Not connected</div>
 
     <div class="verbose-header">
       <span>VERBOSE LOG <span id="hzBadge" class="live-badge">0 pkt/s</span></span>
       <div class="verbose-controls">
-        <label><input type="checkbox" id="logIdleCheck" /> Логировать покой</label>
-        <button id="clearLogBtn" class="mini-btn">Очистить</button>
+        <label><input type="checkbox" id="logIdleCheck" /> Log Idle</label>
+        <button id="clearLogBtn" class="mini-btn">Clear</button>
       </div>
     </div>
     <div id="verboseBox" class="verbose-box"></div>
@@ -456,9 +456,9 @@
       const levelNibble = raw & 0x0f;
       const statusNibble = (raw >> 4) & 0x0f;
       const percent = Math.min(100, levelNibble * 10);
-      let statusLabel = "АКБ";
-      if (statusNibble === 0x01) statusLabel = "Зарядка";
-      else if (statusNibble === 0x02) statusLabel = "Заряжен";
+      let statusLabel = "BAT";
+      if (statusNibble === 0x01) statusLabel = "Charging";
+      else if (statusNibble === 0x02) statusLabel = "Full";
       batteryPercent = percent;
       batteryKnown = true;
       const key = `${percent}-${statusNibble}`;
@@ -467,7 +467,7 @@
         batFill.style.width = `${percent}%`;
         batFill.style.background = statusNibble === 0x01 ? "#38bdf8" : (percent <= 20 ? "#f87171" : "#34d399");
         batText.textContent = `${percent}% (${statusLabel})`;
-        addLog(`BAT Питание: ${percent}% | ${statusLabel}`, "log-sys");
+        addLog(`BAT Power: ${percent}% | ${statusLabel}`, "log-sys");
       }
     }
 
@@ -480,8 +480,8 @@
       l2StartVal.textContent = triggerState.l2Start;
       r2ForceVal.textContent = triggerState.r2Force;
       r2StartVal.textContent = triggerState.r2Start;
-      l2Summary.textContent = triggerState.l2Force > 0 ? `${Math.round((triggerState.l2Force / 255) * 100)}%` : "Выкл";
-      r2Summary.textContent = triggerState.r2Force > 0 ? `${Math.round((triggerState.r2Force / 255) * 100)}%` : "Выкл";
+      l2Summary.textContent = triggerState.l2Force > 0 ? `${Math.round((triggerState.l2Force / 255) * 100)}%` : "OFF";
+      r2Summary.textContent = triggerState.r2Force > 0 ? `${Math.round((triggerState.r2Force / 255) * 100)}%` : "OFF";
     }
 
     [l2ForceEl, l2StartEl, r2ForceEl, r2StartEl].forEach(slider => {
@@ -498,7 +498,7 @@
       r2StartEl.value = 0;
       syncTriggerUI();
       setLightbarBrightness(null, lastSentClick);
-      addLog("OUT Курки сброшены в свободный ход", "log-out");
+      addLog("OUT Triggers reset to free travel", "log-out");
     });
 
     // setLightbarBrightness: rgb tuple or null (idle -> battery/blue)
@@ -558,9 +558,9 @@
         const hexColor = [r, g, b].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
         addLog(`OUT [0x${reportId.toString(16).padStart(2, "0")}] -> LED #${hexColor}${isClicked ? " (CLICK!)" : ""} | L2(${triggerState.l2Force}) R2(${triggerState.r2Force})`, "log-out");
       } catch (err) {
-        addLog(`ERR Ошибка отправки HID-отчёта: ${err.message}`, "log-err");
+        addLog(`ERR Failed to send HID report: ${err.message}`, "log-err");
         statusEl.style.color = "#f87171";
-        statusEl.textContent = "Устройство отключено или ошибка записи.";
+        statusEl.textContent = "Device disconnected or write error.";
       } finally {
         isSending = false;
         if (pendingBrightness !== null && (pendingBrightness.rgb !== rgb || pendingBrightness.isClicked !== isClicked)) {
@@ -633,7 +633,7 @@
         const now = performance.now();
         if (now - lastLogTime > 500) {
           lastLogTime = now;
-          addLog(`IN  [0x${reportId.toString(16).padStart(2, "0")}] len=${data.byteLength}B (нет данных тачпада — нажмите кнопку PS)`, "log-sys");
+          addLog(`IN  [0x${reportId.toString(16).padStart(2, "0")}] len=${data.byteLength}B (no touchpad data — press the PS button)`, "log-sys");
         }
         return;
       }
@@ -684,23 +684,23 @@
       if (isPadClicked) {
         padLabel.textContent = "";
         touchpadEl.style.borderColor = "#ef4444";
-        touchReadout.textContent = "КЛИК ПО ТАЧПАДУ: КРАСНЫЙ (#FF0000)";
+        touchReadout.textContent = "TOUCHPAD CLICK: RED (#FF0000)";
       } else if (anyTouch) {
         padLabel.textContent = "";
         touchpadEl.style.borderColor = `rgb(${brightness}, ${brightness}, ${brightness})`;
-        touchReadout.textContent = `Яркость: ${percent}% (RGB: ${brightness})`;
+        touchReadout.textContent = `Brightness: ${percent}% (RGB: ${brightness})`;
       } else {
-        padLabel.textContent = "Коснитесь или нажмите сенсорную панель";
+        padLabel.textContent = "Touch or click the touchpad";
         touchpadEl.style.borderColor = "#2f2f3d";
         const trig = l2Held || r2Held ? (l2Held && r2Held ? "L2+R2" : (l2Held ? "L2" : "R2")) : null;
         if (trig) {
-          touchReadout.textContent = `Курок ${trig} — СИНИЙ (#0066FF)`;
+          touchReadout.textContent = `Trigger ${trig} — BLUE (#0066FF)`;
         } else if (batteryKnown) {
           const [br, bg, bb] = batteryColorForPercent(batteryPercent);
           const hex = [br, bg, bb].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
-          touchReadout.textContent = `Покой: батарея ${batteryPercent}% (#${hex})`;
+          touchReadout.textContent = `Idle: Battery ${batteryPercent}% (#${hex})`;
         } else {
-          touchReadout.textContent = "Яркость: 0% (ВЫКЛ)";
+          touchReadout.textContent = "Brightness: 0% (OFF)";
         }
       }
       const now = performance.now();
@@ -712,11 +712,11 @@
           const p1Str = p1.isTouching ? `P1(id:${p1.touchId} X:${p1.x} Y:${p1.y})` : "P1(off)";
           const p2Str = p2.isTouching ? `P2(id:${p2.touchId} X:${p2.x} Y:${p2.y})` : "P2(off)";
           if (isPadClicked) {
-            addLog(`IN  [${rIdHex}] CLICK=1 -> ${p1Str} ${p2Str} | КРАСНЫЙ`, "log-err");
+            addLog(`IN  [${rIdHex}] CLICK=1 -> ${p1Str} ${p2Str} | RED`, "log-err");
           } else if (anyTouch) {
-            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> ${p1Str} ${p2Str} | от центра: ${distPct}%`, "log-touch");
+            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> ${p1Str} ${p2Str} | from center: ${distPct}%`, "log-touch");
           } else {
-            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> Палец убран`, "log-in");
+            addLog(`IN  [${rIdHex}] raw=[${p1.rawHex} | ${p2.rawHex}] -> Finger lifted`, "log-in");
           }
         }
       }
@@ -736,17 +736,17 @@
       }
     }
 
-    addLog("Готово к работе. Нажмите «Подключить DualSense»...", "log-sys");
+    addLog("Ready. Click 'Connect DualSense'...", "log-sys");
 
     connectBtn.addEventListener("click", async () => {
       if (!("hid" in navigator)) {
-        addLog("ERR Браузер не поддерживает WebHID.", "log-err");
+        addLog("ERR Browser does not support WebHID.", "log-err");
         statusEl.style.color = "#f87171";
-        statusEl.textContent = "WebHID не поддерживается в этом браузере.";
+        statusEl.textContent = "WebHID is not supported in this browser.";
         return;
       }
       try {
-        addLog("SYS Запрос доступа к HID-устройству...", "log-sys");
+        addLog("SYS Requesting HID device access...", "log-sys");
         const devices = await navigator.hid.requestDevice({
           filters: [
             { vendorId: VENDOR_ID_SONY, productId: PRODUCT_ID_DUALSENSE, usagePage: 0x0001, usage: 0x0005 },
@@ -754,25 +754,25 @@
           ]
         });
         if (!devices.length) {
-          addLog("SYS Выбор устройства отменён пользователем.", "log-sys");
+          addLog("SYS Device selection cancelled by user.", "log-sys");
           return;
         }
         device = devices.at(0);
         if (!device.opened) await device.open();
         connectionType = detectConnectionType(device);
         [l2ForceEl, l2StartEl, r2ForceEl, r2StartEl, resetTriggersBtn].forEach(el => (el.disabled = false));
-        addLog(`SYS Подключено: ${device.productName} | Режим: ${connectionType.toUpperCase()}`, "log-sys");
+        addLog(`SYS Connected: ${device.productName} | Mode: ${connectionType.toUpperCase()}`, "log-sys");
         lastSentBrightness = -1;
         lastSentClick = false;
         lastTriggersHeld = false;
         await setLightbarBrightness(null, false); // start in idle battery gradient
         device.addEventListener("inputreport", handleInputReport);
         statusEl.style.color = "#34d399";
-        statusEl.textContent = `Подключено (${connectionType.toUpperCase()}) — водите или нажимайте панель`;
+        statusEl.textContent = `Connected (${connectionType.toUpperCase()}) — move or click the pad`;
       } catch (err) {
         addLog(`ERR ${err.message}`, "log-err");
         statusEl.style.color = "#f87171";
-        statusEl.textContent = "Подключение отменено или заблокировано.";
+        statusEl.textContent = "Connection cancelled or blocked.";
       }
     });
   </script>
