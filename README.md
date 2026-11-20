@@ -23,8 +23,8 @@ Double-click the HTML file, connect your controller, and go. No build step, no `
 ---
 
 ## Quick start
-Open THIS link:
-
+Open this link (hosted on GitHub Pages)
+https://semen1207.github.io/dualsense-tool/
 > **Browser support:** WebHID is required. Firefox and Safari do **not** support it. Chrome/Edge on desktop only.
 
 ---
